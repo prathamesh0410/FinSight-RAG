@@ -8,21 +8,17 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.core.config import get_settings
 from app.core.database import close_db, init_db
-from app.api.routes import documents, chat, evaluation, metadata
-from app.services.document_processor import DocumentProcessor
-from app.services.vector_store import VectorStoreService
-from app.services.rag import RAGPipeline
-from app.services.embeddings import EmbeddingService
-from app.services.evaluation import EvaluationService
-
+from app.api.routes import documents, chat, evaluation
 import structlog
 
 structlog.configure(
-    level=get_settings().LOG_LEVEL,
     processors=[
+        structlog.processors.add_log_level,
         structlog.processors.JSONRenderer(),
     ],
 )
+
+logger = structlog.get_logger(__name__)
 
 
 @asynccontextmanager
@@ -30,26 +26,8 @@ async def lifespan(app: FastAPI):
     """Application lifespan events."""
     # Initialize database
     await init_db()
-
-    # Initialize services
-    get_settings()
-    document_processor = DocumentProcessor("rbi_circular")
-    vector_store = VectorStoreService(None)
-    embedding_service = EmbeddingService()
-    rag_pipeline = RAGPipeline(
-        vector_store=vector_store,
-        llm_client=None,  # Will initialize with OpenAI
-        embedder=embedding_service,
-        settings=get_settings(),
-    )
-    evaluation_service = EvaluationService()
-
-    # Run startup tasks
     logger.info("FinSight RAG starting up...")
-
     yield
-
-    # Shutdown tasks
     await close_db()
     logger.info("FinSight RAG shutdown complete")
 
@@ -102,7 +80,7 @@ async def health_check():
     }
 
 
-@app.exception_handler(status.HTTP_404_NOT_FOUND, status_code=404)
+@app.exception_handler(404)
 async def not_found(request: Request, exc):
     """Custom 404 handler."""
     return JSONResponse(
@@ -111,7 +89,7 @@ async def not_found(request: Request, exc):
     )
 
 
-@app.exception_handler(status.HTTP_422_UNPROCESSABLE_ENTITY, status_code=422)
+@app.exception_handler(422)
 async def validation_error(request: Request, exc):
     """Custom validation error handler."""
     return JSONResponse(
@@ -124,4 +102,3 @@ async def validation_error(request: Request, exc):
 app.include_router(documents.router, prefix="/api/v1")
 app.include_router(chat.router, prefix="/api/v1")
 app.include_router(evaluation.router, prefix="/api/v1")
-app.include_router(metadata.router, prefix="/api/v1")

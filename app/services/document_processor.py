@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 from dataclasses import dataclass
 
-from pdfplumber import pdfplumber
+import pdfplumber
 import docx
 
 logger = logging.getLogger(__name__)
@@ -284,3 +284,35 @@ class MetadataExtractor:
     def extract(cls, text: str, filename: str) -> ExtractedMetadata:
         """Extract all metadata from document."""
         return cls.extract_from_pdf(text, filename)
+
+
+class DocumentProcessor:
+    """Process documents for the RAG pipeline."""
+
+    def __init__(self, document_type: str = "rbi_circular"):
+        self.document_type = document_type
+
+    async def _extract_pdf_text(self, file) -> str:
+        """Extract text from uploaded PDF file."""
+        import pdfplumber
+        text = ""
+        with pdfplumber.open(file.file) as pdf:
+            for page in pdf.pages:
+                text += page.extract_text() or ""
+        return text
+
+    def process_document(self, text_content: str):
+        """Process document text into chunks."""
+        from app.services.document_processor import LegalAwareChunker
+        chunks_data = LegalAwareChunker.chunk_text(text_content)
+        chunks = []
+        for c in chunks_data:
+            chunk = ParsedChunk(
+                chunk_index=c["chunk_index"],
+                content=c["content"],
+                token_count=c["token_count"],
+                embedding=[],
+                section_title=c.get("section_title")
+            )
+            chunks.append(chunk)
+        return chunks

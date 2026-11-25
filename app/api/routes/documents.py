@@ -5,7 +5,7 @@ from typing import List
 
 from app.core.database import get_db
 from app.core.config import get_settings
-from app.schemas.document import DocumentResponse, DocumentUpload
+from app.schemas.document import DocumentResponse, DocumentUploadResponse
 from app.services.document_processor import DocumentProcessor
 from app.services.vector_store import VectorStoreService
 from app.services.rag import RAGPipeline

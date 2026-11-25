@@ -1,9 +1,8 @@
-"""Document and chunk models with pgvector support."""
+"""Document and chunk models with SQLite vector support."""
 import uuid
 from datetime import datetime, UTC
 from typing import List, Dict, Any, Optional
 
-from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     String,
     Text,
@@ -94,7 +93,7 @@ class DocumentChunk(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     token_count: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    embedding: Mapped[List[float]] = mapped_column(Vector(1536), nullable=False)
+    embedding: Mapped[List[float]] = mapped_column(JSON, nullable=False)
 
     page_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     section_title: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)

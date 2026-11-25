@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4o-mini"
     OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
 
+    # OpenRouter (free tier)
+    OPENROUTER_API_KEY: Optional[str] = None
+    OPENROUTER_MODEL: str = "openrouter/free"
+
     # Anthropic
     ANTHROPIC_API_KEY: Optional[str] = None
     ANTHROPIC_MODEL: str = "claude-3-haiku-20240307"
@@ -56,7 +60,7 @@ class Settings(BaseSettings):
 
     # Embeddings
     EMBEDDING_BATCH_SIZE: int = 32
-    EMBEDDING_DIMENSION: int = 1536
+    EMBEDDING_DIMENSION: int = 384
 
     # Ingestion
     MAX_FILE_SIZE_MB: int = 50

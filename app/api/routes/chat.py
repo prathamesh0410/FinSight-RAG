@@ -7,10 +7,11 @@ import time
 from app.core.database import get_db
 from app.core.config import get_settings
 from app.schemas.document import QueryRequest, QueryResponse
-from app.services.vector_store import VectorStoreService
+from app.services.vector_store_sqlite import SQLiteVectorStoreService
 from app.services.rag import RAGPipeline
 from app.services.embeddings import EmbeddingService
 from app.services.document_processor import DocumentProcessor
+from app.services.llm_client import LLMClient
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
@@ -25,11 +26,12 @@ async def process_query(
     settings = get_settings()
 
     # Initialize services
-    vector_store = VectorStoreService(db)
+    vector_store = SQLiteVectorStoreService(db)
     embedding_service = EmbeddingService()
+    llm_client = LLMClient()
     rag_pipeline = RAGPipeline(
         vector_store=vector_store,
-        llm_client=None,  # Will initialize with OpenAI
+        llm_client=llm_client,
         embedder=embedding_service,
         settings=settings,
     )
@@ -85,7 +87,7 @@ async def get_document_citations(
     db: AsyncSession = Depends(get_db)
 ):
     """Get citations for a specific document."""
-    vector_store = VectorStoreService(db)
+    vector_store = SQLiteVectorStoreService(db)
     chunks = await vector_store.get_document_chunks(document_id)
 
     return {
